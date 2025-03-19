@@ -1,30 +1,37 @@
 import os
-from typing import Literal
+from typing import Literal, List
 from tavily import TavilyClient
 from pydantic import BaseModel
 from ollama import chat
-from typing import Literal
 from dotenv import load_dotenv
 from groq import Groq
 import instructor
 import requests
 
+
 load_dotenv()
 
 
 def fetch_from_web(query):
-    tavily_client = TavilyClient(api_key= os.getenv("TAVILY_API_KEY"))
-    response = tavily_client.search(query, include_raw_content=True, max_results=10 , topic="news" , search_depth="basic")
+    tavily_client = TavilyClient(api_key=os.getenv("TAVILY_API_KEY"))
+    response = tavily_client.search(
+        query,
+        include_raw_content=True,
+        max_results=10,
+        topic="news",
+        search_depth="basic"
+    )
     return {"sources": response['results']}
+
 
 class Sentiment(BaseModel):
     summary: str
     reasoning: str
-    topics: list[str]
+    topics: List[str]
     sentiment: Literal['positive', 'negative', 'neutral']
 
-def analyze_sentiment(article , model_provider):
-    
+
+def analyze_sentiment(article, model_provider):
     sentiment_prompt = f"""
                 Analyze the following news article about a company:
 
@@ -48,30 +55,27 @@ def analyze_sentiment(article , model_provider):
 
     try:
         if model_provider == "Ollama":
-            
             response = chat(
-            messages=[
-                {
-                    'role': 'user',
-                    'content': sentiment_prompt
-                }
-            ],
-            model='llama3.2:3b',
-            format=Sentiment.model_json_schema(),
+                messages=[
+                    {
+                        'role': 'user',
+                        'content': sentiment_prompt
+                    }
+                ],
+                model='llama3.2:3b',
+                format=Sentiment.model_json_schema(),
             )
 
             sentiment_output = Sentiment.model_validate_json(response.message.content)
             
             final_dict = {
-            "title": article["title"],
-            "summary": sentiment_output.summary,
-            "reasoning": sentiment_output.reasoning,
-            "topics": sentiment_output.topics,
-            "sentiment": sentiment_output.sentiment
-        }
-
+                "title": article["title"],
+                "summary": sentiment_output.summary,
+                "reasoning": sentiment_output.reasoning,
+                "topics": sentiment_output.topics,
+                "sentiment": sentiment_output.sentiment
+            }
         else:
-        
             llm = Groq(api_key=os.environ.get("GROQ_API_KEY"))
             llm = instructor.from_groq(llm, mode=instructor.Mode.TOOLS)
 
@@ -89,12 +93,12 @@ def analyze_sentiment(article , model_provider):
             sentiment_output = resp.model_dump()
             
             final_dict = {
-            "title": article["title"],
-            "summary": sentiment_output.get("summary"),
-            "reasoning": sentiment_output.get("reasoning"),
-            "topics": sentiment_output.get("topics"),
-            "sentiment": sentiment_output.get("sentiment")
-        }
+                "title": article["title"],
+                "summary": sentiment_output.get("summary"),
+                "reasoning": sentiment_output.get("reasoning"),
+                "topics": sentiment_output.get("topics"),
+                "sentiment": sentiment_output.get("sentiment")
+            }
 
         return final_dict
 
@@ -102,8 +106,8 @@ def analyze_sentiment(article , model_provider):
         print(f"Error parsing sentiment output: {e}")
         return None
     
-def generate_comparative_sentiment(articles):
 
+def generate_comparative_sentiment(articles):
     sentiment_counts = {"Positive": 0, "Negative": 0, "Neutral": 0}
     
     for article in articles:
@@ -137,10 +141,6 @@ def generate_comparative_sentiment(articles):
                 other_topics = set(other_article.get("topics", []))
                 unique_topics[f"Unique Topics in Article {i+1}"] = list(article_topics - other_topics)
     
-    positive_count = sentiment_counts["Positive"]
-    negative_count = sentiment_counts["Negative"]
-    neutral_count = sentiment_counts["Neutral"]
-    
     comparative_sentiment = {
         "Sentiment Distribution": sentiment_counts,
         "Coverage Differences": "coverage_differences",
@@ -161,13 +161,13 @@ def generate_comparative_sentiment(articles):
     
     return comparative_sentiment
 
+
 def get_summaries_by_sentiment(articles):
     pos_sum = []
     neg_sum = []
     neutral_sum = []
     
     for article in articles:
-
         sentiment = article.get("sentiment", "").lower()
         title = article.get("title", "No Title")
         summary = article.get("summary", "No Summary")
@@ -185,10 +185,10 @@ def get_summaries_by_sentiment(articles):
     neg_sum = "\n\n".join(neg_sum) if neg_sum else "No negative articles available."
     neutral_sum = "\n\n".join(neutral_sum) if neutral_sum else "No neutral articles available."
 
-    return pos_sum , neg_sum , neutral_sum
+    return pos_sum, neg_sum, neutral_sum
 
-def comparative_analysis(pos_sum , neg_sum , neutral_sum , model_provider):
-    
+
+def comparative_analysis(pos_sum, neg_sum, neutral_sum, model_provider):
     prompt = f"""
 Perform a detailed comparative analysis of the sentiment across three categories of articles (Positive, Negative, and Neutral) about a specific company. Address the following aspects:
 
@@ -215,35 +215,35 @@ Perform a detailed comparative analysis of the sentiment across three categories
 """
 
     if model_provider == "Ollama":
-
         response = chat(
-        messages=[
-            {
-                'role': 'user',
-                'content': prompt
-            }
-        ],
-        model='llama3.2:3b'
-    )
+            messages=[
+                {
+                    'role': 'user',
+                    'content': prompt
+                }
+            ],
+            model='llama3.2:3b'
+        )
         response = response.message.content
     
     else:
         llm = Groq(api_key=os.environ.get("GROQ_API_KEY"))
         
         chat_completion = llm.chat.completions.create(
-        messages=[
-            {
-                "role": "user",
-                "content": prompt[:5000],
-            }
-        ],
-        model="llama-3.3-70b-versatile",
-    )
+            messages=[
+                {
+                    "role": "user",
+                    "content": prompt[:5000],
+                }
+            ],
+            model="llama-3.3-70b-versatile",
+        )
         response = chat_completion.choices[0].message.content
     
     return response
 
-def generate_final_report(pos_sum, neg_sum, neutral_sum, comparative_sentiment , model_provider):
+
+def generate_final_report(pos_sum, neg_sum, neutral_sum, comparative_sentiment, model_provider):
     final_report_prompt = f"""
     Corporate News Sentiment Analysis Report:
 
@@ -299,7 +299,6 @@ def generate_final_report(pos_sum, neg_sum, neutral_sum, comparative_sentiment ,
 """
 
     if model_provider == "Ollama":
-
         final_report = chat(
             messages=[
                 {
@@ -312,24 +311,23 @@ def generate_final_report(pos_sum, neg_sum, neutral_sum, comparative_sentiment ,
         response = final_report.message.content
     
     else:
-    
         llm = Groq(api_key=os.environ.get("GROQ_API_KEY"))
         
         chat_completion = llm.chat.completions.create(
-        messages=[
-        {
-            "role": "user",
-            "content": final_report_prompt[:5000],
-        }
-    ],
-    model="llama-3.3-70b-versatile",
-)
+            messages=[
+                {
+                    "role": "user",
+                    "content": final_report_prompt[:5000],
+                }
+            ],
+            model="llama-3.3-70b-versatile",
+        )
         response = chat_completion.choices[0].message.content
     
     return response
     
 
-def translate(report , model_provider):
+def translate(report, model_provider):
     translation_prompt = f"""
     Translate the following corporate sentiment analysis report into Hindi:
 
@@ -338,7 +336,6 @@ def translate(report , model_provider):
     Ensure the translation maintains professional tone and structure while accurately conveying key insights and details.
     """
     if model_provider == "Ollama":
-    
         translation = chat(
             messages=[
                 {
@@ -349,31 +346,30 @@ def translate(report , model_provider):
             model='llama3.2:3b'
         )
         response = translation.message.content
-        
     
     else:
         translation_llm = Groq(api_key=os.environ.get("GROQ_API_KEY"))
         
         chat_completion = translation_llm.chat.completions.create(
-        messages=[
-            {
-                "role": "user",
-                "content": translation_prompt[:5000],
-            }
-        ],
-        model="llama-3.3-70b-versatile",
-    )
+            messages=[
+                {
+                    "role": "user",
+                    "content": translation_prompt[:5000],
+                }
+            ],
+            model="llama-3.3-70b-versatile",
+        )
         response = chat_completion.choices[0].message.content
         
     return response
 
+
 def text_to_speech(text):
     url = "https://api.elevenlabs.io/v1/text-to-speech/JBFqnCBsd6RMkjVDRZzb?output_format=mp3_44100_128"
 
-    model_id="eleven_multilingual_v2"
-    output_file="output.mp3"
+    model_id = "eleven_multilingual_v2"
+    output_file = "output.mp3"
     api_key = "sk_a927222500aab9665f83f078b92e833e7ec1389ee68238c0"
-    
     
     headers = {
         "xi-api-key": api_key,
@@ -393,4 +389,3 @@ def text_to_speech(text):
         print(f"Audio saved to {output_file}")
     else:
         print(f"Error: {response.status_code} - {response.text}")
-

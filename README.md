@@ -146,6 +146,7 @@ To access the FastAPI endpoint using Postman:
 - The Eleven Labs API key is valid and has the necessary permissions.
 
 **Limitations:**
+- Currently disabled the "Comparative Analysis Functionality" to reduce overall prompt sizes.
 - The current implementation uses the Llama 3.2 3B model, a smaller model chosen due to GPU unavailability. Performance is expected to improve significantly with a larger model or with Groq PRO Tier.
 - The sentiment analysis is limited to the first 5 articles fetched because of rate limits imposed by Groq Free Tier.
 - A third-party API is used for text-to-speech instead of a custom open-source model (e.g., Indic-Parler TTS) due to the 5 GB storage limit on Hugging Face Spaces.
