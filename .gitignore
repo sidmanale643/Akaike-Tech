@@ -1,2 +1,3 @@
 .alkaike-tech/
 __pycache__/
+.env
