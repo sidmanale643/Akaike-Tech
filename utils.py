@@ -7,10 +7,19 @@ from dotenv import load_dotenv
 from groq import Groq
 import instructor
 import requests
+# import torch
+# from parler_tts import ParlerTTSForConditionalGeneration
+# from transformers import AutoTokenizer
+# import soundfile as sf
 
 
 load_dotenv()
 
+_device = None
+_model = None
+_tokenizer = None
+_description_tokenizer = None
+_is_model_loaded = False
 
 def fetch_from_web(query):
     tavily_client = TavilyClient(api_key=os.getenv("TAVILY_API_KEY"))
@@ -363,29 +372,74 @@ def translate(report, model_provider):
         
     return response
 
-
-def text_to_speech(text):
-    url = "https://api.elevenlabs.io/v1/text-to-speech/JBFqnCBsd6RMkjVDRZzb?output_format=mp3_44100_128"
-
-    model_id = "eleven_multilingual_v2"
-    output_file = "output.mp3"
-    api_key = os.getenv("TAVILY_API_KEY")
+# def load_tts():
+#     global _device, _model, _tokenizer, _description_tokenizer, _is_model_loaded
     
-    headers = {
-        "xi-api-key": api_key,
-        "Content-Type": "application/json"
-    }
+    
+#     if not _is_model_loaded:
+#         print("Loading Indic Parler TTS model...")
+#         _device = "cuda:0" if torch.cuda.is_available() else "cpu"
+        
+#         from parler_tts import ParlerTTSForConditionalGeneration
+        
+#         _model = ParlerTTSForConditionalGeneration.from_pretrained("ai4bharat/indic-parler-tts").to(_device)
+#         _tokenizer = AutoTokenizer.from_pretrained("ai4bharat/indic-parler-tts")
+#         _description_tokenizer = AutoTokenizer.from_pretrained(_model.config.text_encoder._name_or_path)
+#         _is_model_loaded = True
+        
+#         print("Indic Parler TTS model loaded successfully")
+#     else:
+#         print("Using already loaded Indic Parler TTS model")
 
-    payload = {
-        "text": text,
-        "model_id": model_id
-    }
+#     return _device, _model, _tokenizer, _description_tokenizer
 
-    response = requests.post(url, headers=headers, json=payload)
+def text_to_speech(text , tts_provider):
+    
+    if tts_provider == "ElevenLabs":
+    
+        url = "https://api.elevenlabs.io/v1/text-to-speech/JBFqnCBsd6RMkjVDRZzb?output_format=mp3_44100_128"
 
-    if response.status_code == 200:
-        with open(output_file, "wb") as f:
-            f.write(response.content)
-        print(f"Audio saved to {output_file}")
-    else:
-        print(f"Error: {response.status_code} - {response.text}")
+        model_id = "eleven_multilingual_v2"
+        output_file = "output.mp3"
+        api_key = os.getenv("TAVILY_API_KEY")
+        
+        headers = {
+            "xi-api-key": api_key,
+            "Content-Type": "application/json"
+        }
+
+        payload = {
+            "text": text,
+            "model_id": model_id
+        }
+
+        response = requests.post(url, headers=headers, json=payload)
+
+        if response.status_code == 200:
+            with open(output_file, "wb") as f:
+                f.write(response.content)
+            print(f"Audio saved to {output_file}")
+        else:
+            print(f"Error: {response.status_code} - {response.text}")
+            
+    # elif tts_provider == "Indic Parler TTS":
+    
+    #     device, model, tokenizer, description_tokenizer = load_tts()
+        
+    #     prompt = text
+    #     description = "Divya speaks with a high pitch at a normal pace in a clear, close-sounding environment. Her neutral tone is captured with excellent audio quality"
+
+    #     description_input_ids = description_tokenizer(description, return_tensors="pt").to(device)
+    #     prompt_input_ids = tokenizer(prompt, return_tensors="pt").to(device)
+
+    #     generation = model.generate(
+    #         input_ids=description_input_ids.input_ids, 
+    #         attention_mask=description_input_ids.attention_mask, 
+    #         prompt_input_ids=prompt_input_ids.input_ids, 
+    #         prompt_attention_mask=prompt_input_ids.attention_mask
+    #     )
+    #     audio_arr = generation.cpu().numpy().squeeze()
+    #     output_file= "indic_tts_out_1.wav"
+    #     sf.write(file_path, audio_arr, model.config.sampling_rate)
+        
+        return output_file

@@ -6,14 +6,14 @@ from utils import (
     generate_final_report,
     get_summaries_by_sentiment,
     translate,
+    #load_tts,
     text_to_speech,
 )
 
 app = FastAPI()
 
-
 @app.get("/home")
-def main(company_name: str, model_provider: str):
+def main(company_name: str, model_provider: str, tts_provider: str):
     web_results = fetch_from_web(company_name)
 
     if "sources" not in web_results:
@@ -39,7 +39,8 @@ def main(company_name: str, model_provider: str):
     )
 
     hindi_translation = translate(final_report, model_provider)
-    audio_path = text_to_speech(hindi_translation)
+
+    audio_path = text_to_speech(hindi_translation , tts_provider)
 
     return {
         "company_name": company_name,
