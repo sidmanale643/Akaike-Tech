@@ -73,7 +73,6 @@ ELEVEN_LABS_API_KEY =your_elevenlabs_api_key
 1. Enter the company name and select the model provider in the Streamlit app.
 2. Click on **"Fetch Sentiment Data"** to analyze sentiment data for the specified company.
 
-
 ### API Usage
 
 The provided codebase primarily consists of a FastAPI application (`api.py`) and a Streamlit application (`app.py`). Here's a breakdown of how the APIs are being used:
@@ -108,6 +107,12 @@ Returns a JSON object containing:
 - Sends a request to the FastAPI endpoint to fetch sentiment data.
 - Displays the results, including the final report and audio output.
 
+### OpenSource TextToSpeech Model
+
+- Multilingual Support: Generates natural-sounding speech in 21 languages, including 20 Indic languages and English.
+- Customizable Voices: Offers 69 unique voices with options to adjust background noise, pitch, and speaking rate.
+- Open-Source: Developed by Hugging Face and AI4Bharat, licensed under Apache 2.0.
+
 ### Third-Party APIs
 
 1. **Tavily API**
@@ -131,10 +136,10 @@ To access the FastAPI endpoint using Postman:
 3. Enter the URL:
 
    ```
-   http://localhost:8000/home?company_name=Tesla&model_provider=Ollama
+   http://localhost:8000/home?company_name=Tesla&model_provider=Ollama&tts_provider=ElevenLabs
    ```
 
-   Replace `Tesla` and `Ollama` with your desired values.
+   Replace `Tesla` , `Ollama` and `ElevenLabs` with your desired values.
 
 4. Send the request and view the response in the Postman interface.
 
@@ -143,10 +148,12 @@ To access the FastAPI endpoint using Postman:
 **Assumptions:**
 - The Tavily API key is correctly set in the environment variables.
 - The model providers "Ollama" and "Groq" are available and correctly configured.
+- A GPU is available for the TTS model to be used.
 - The Eleven Labs API key is valid and has the necessary permissions.
 
 **Limitations:**
 - Currently disabled the "Comparative Analysis Functionality" to reduce overall prompt sizes.
+- CPU performance is extremely slow.
 - The current implementation uses the Llama 3.2 3B model, a smaller model chosen due to GPU unavailability. Performance is expected to improve significantly with a larger model or with Groq PRO Tier.
 - The sentiment analysis is limited to the first 5 articles fetched because of rate limits imposed by Groq Free Tier.
 - A third-party API is used for text-to-speech instead of a custom open-source model (e.g., Indic-Parler TTS) due to the 5 GB storage limit on Hugging Face Spaces.
