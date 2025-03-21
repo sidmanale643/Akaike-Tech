@@ -85,6 +85,7 @@ The provided codebase primarily consists of a FastAPI application (`api.py`) and
 **Parameters:**
 - `company_name`: The name of the company for which sentiment analysis is to be performed.
 - `model_provider`: The provider of the sentiment analysis model, either "Ollama" or "Groq".
+- `tts_provider`: The provider of the TextToSpeech model.
 
 **Functionality:**
 - Fetches news articles related to the specified company.
@@ -99,7 +100,7 @@ Returns a JSON object containing:
 - Comparative sentiment
 - Final report
 - Hindi translation
-- Audio URL
+- Audio File URL
 
 #### Streamlit Application (`app.py`)
 
@@ -108,6 +109,8 @@ Returns a JSON object containing:
 - Displays the results, including the final report and audio output.
 
 ### OpenSource TextToSpeech Model
+
+**Indic Parler TTS**
 
 - Multilingual Support: Generates natural-sounding speech in 21 languages, including 20 Indic languages and English.
 - Customizable Voices: Offers 69 unique voices with options to adjust background noise, pitch, and speaking rate.
@@ -156,7 +159,7 @@ To access the FastAPI endpoint using Postman:
 - CPU performance is extremely slow.
 - The current implementation uses the Llama 3.2 3B model, a smaller model chosen due to GPU unavailability. Performance is expected to improve significantly with a larger model or with Groq PRO Tier.
 - The sentiment analysis is limited to the first 5 articles fetched because of rate limits imposed by Groq Free Tier.
-- A third-party API is used for text-to-speech instead of a custom open-source model (e.g., Indic-Parler TTS) due to the 5 GB storage limit on Hugging Face Spaces.
+- A third-party API is used for text-to-speech instead of a custom open-source model (e.g., Indic-Parler TTS) due to the unavailability of a GPU on Hugging Face Spaces.
 - The text-to-speech functionality depends on the Eleven Labs API, which may have rate limits or require a subscription.
 - The translation and sentiment analysis rely on the accuracy and availability of the respective APIs.
 
