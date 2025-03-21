@@ -369,7 +369,7 @@ def text_to_speech(text):
 
     model_id = "eleven_multilingual_v2"
     output_file = "output.mp3"
-    api_key = "sk_a927222500aab9665f83f078b92e833e7ec1389ee68238c0"
+    api_key = os.getenv("TAVILY_API_KEY")
     
     headers = {
         "xi-api-key": api_key,
